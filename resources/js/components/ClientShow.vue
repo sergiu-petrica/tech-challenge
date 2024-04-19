@@ -39,7 +39,7 @@
                 <div class="bg-white rounded p-4" v-if="currentTab == 'bookings'">
                     <h3 class="mb-3">List of client bookings</h3>
 
-                    <template v-if="client.bookings && client.bookings.length > 0">
+                    <template v-if="bookings && bookings.length > 0">
                         <table>
                             <thead>
                                 <tr>
@@ -87,8 +87,25 @@ export default {
     props: ['client'],
 
     data() {
+        let bookings = this.client.bookings;
+
+        if (bookings) {
+            bookings = bookings.sort((a, b) => {
+                if (a.start < b.start) {
+                    return 1;
+                }
+
+                if (a.start > b.start) {
+                    return -1;
+                }
+
+                return 0;
+            });
+        }
+
         return {
             currentTab: 'bookings',
+            bookings,
         }
     },
 
@@ -108,7 +125,6 @@ export default {
 
             const startDateTime = DateTime.fromISO(startTime);
             const endDateTime = DateTime.fromISO(endTime);
-            console.log(startDateTime, endDateTime);
 
             let result = `${startDateTime.toFormat('cccc d LLLL y, HH:mm')}`;
 

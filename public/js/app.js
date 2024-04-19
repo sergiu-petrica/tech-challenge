@@ -2074,8 +2074,25 @@ __webpack_require__.r(__webpack_exports__);
   name: 'ClientShow',
   props: ['client'],
   data: function data() {
+    var bookings = this.client.bookings;
+
+    if (bookings) {
+      bookings = bookings.sort(function (a, b) {
+        if (a.start < b.start) {
+          return 1;
+        }
+
+        if (a.start > b.start) {
+          return -1;
+        }
+
+        return 0;
+      });
+    }
+
     return {
-      currentTab: 'bookings'
+      currentTab: 'bookings',
+      bookings: bookings
     };
   },
   methods: {
@@ -2092,7 +2109,6 @@ __webpack_require__.r(__webpack_exports__);
 
       var startDateTime = luxon__WEBPACK_IMPORTED_MODULE_1__["DateTime"].fromISO(startTime);
       var endDateTime = luxon__WEBPACK_IMPORTED_MODULE_1__["DateTime"].fromISO(endTime);
-      console.log(startDateTime, endDateTime);
       var result = "".concat(startDateTime.toFormat('cccc d LLLL y, HH:mm'));
 
       if (startDateTime.day === endDateTime.day && startDateTime.month === endDateTime.month && startDateTime.year === endDateTime.year) {
@@ -46494,7 +46510,7 @@ var render = function() {
                   _vm._v("List of client bookings")
                 ]),
                 _vm._v(" "),
-                _vm.client.bookings && _vm.client.bookings.length > 0
+                _vm.bookings && _vm.bookings.length > 0
                   ? [
                       _c("table", [
                         _vm._m(0),
