@@ -1,0 +1,11 @@
+version: '3'
+
+services:
+  mariadb:
+    container_name: sergiu-mariadb
+    image: mariadb:11.3
+    environment:
+      MARIADB_DATABASE: laravel
+      MARIADB_ALLOW_EMPTY_ROOT_PASSWORD: true
+    ports:
+      - "3306:3306"
