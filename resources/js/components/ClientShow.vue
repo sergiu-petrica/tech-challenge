@@ -50,7 +50,7 @@
                             </thead>
                             <tbody>
                                 <tr v-for="booking in client.bookings" :key="booking.id">
-                                    <td>{{ booking.start }} - {{ booking.end }}</td>
+                                    <td>{{ formatBookingPeriod(booking.start, booking.end) }}</td>
                                     <td>{{ booking.notes }}</td>
                                     <td>
                                         <button class="btn btn-danger btn-sm" @click="deleteBooking(booking)">Delete</button>
@@ -79,6 +79,7 @@
 
 <script>
 import axios from 'axios';
+import {DateTime} from "luxon";
 
 export default {
     name: 'ClientShow',
@@ -98,7 +99,27 @@ export default {
 
         deleteBooking(booking) {
             axios.delete(`/bookings/${booking.id}`);
-        }
+        },
+
+        formatBookingPeriod(startTime, endTime) {
+            if (!startTime || !endTime) {
+                throw new Error('Start or end time is invalid');
+            }
+
+            const startDateTime = DateTime.fromISO(startTime);
+            const endDateTime = DateTime.fromISO(endTime);
+            console.log(startDateTime, endDateTime);
+
+            let result = `${startDateTime.toFormat('cccc d LLLL y, HH:mm')}`;
+
+            if (startDateTime.day === endDateTime.day && startDateTime.month === endDateTime.month && startDateTime.year === endDateTime.year) {
+                result += ` to ${endDateTime.toFormat('HH:mm')}`;
+            } else {
+                result += ` to ${endDateTime.toFormat('cccc d LLLL y, HH:mm')}`;
+            }
+
+            return result;
+        },
     }
 }
 </script>
