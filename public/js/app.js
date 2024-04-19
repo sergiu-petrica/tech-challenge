@@ -2156,9 +2156,25 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony default export */ __webpack_exports__["default"] = ({
   name: 'ClientsList',
   props: ['clients'],
+  data: function data() {
+    return {
+      clientList: this.clients
+    };
+  },
   methods: {
     deleteClient: function deleteClient(client) {
-      axios__WEBPACK_IMPORTED_MODULE_0___default.a["delete"]("/clients/".concat(client.id));
+      var _this = this;
+
+      axios__WEBPACK_IMPORTED_MODULE_0___default.a["delete"]("/clients/".concat(client.id)).then(function (response) {
+        _this.removeDeletedClient(client.id);
+      })["catch"](function (error) {
+        console.log('Could not delete user'); // perhaps make this fancier
+      });
+    },
+    removeDeletedClient: function removeDeletedClient(id) {
+      this.clientList = this.clientList.filter(function (client) {
+        return client.id !== id;
+      });
     }
   }
 });
@@ -46588,7 +46604,7 @@ var render = function() {
       _vm._v(" "),
       _c(
         "tbody",
-        _vm._l(_vm.clients, function(client) {
+        _vm._l(_vm.clientList, function(client) {
           return _c("tr", { key: client.id }, [
             _c("td", [_vm._v(_vm._s(client.name))]),
             _vm._v(" "),

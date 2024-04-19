@@ -16,7 +16,7 @@
                 </tr>
             </thead>
             <tbody>
-                <tr v-for="client in clients" :key="client.id">
+                <tr v-for="client in clientList" :key="client.id">
                     <td>{{ client.name }}</td>
                     <td>{{ client.email }}</td>
                     <td>{{ client.phone }}</td>
@@ -39,10 +39,24 @@ export default {
 
     props: ['clients'],
 
+    data() {
+        return {
+            clientList: this.clients,
+        }
+    },
+
     methods: {
         deleteClient(client) {
-            axios.delete(`/clients/${client.id}`);
-        }
+            axios.delete(`/clients/${client.id}`).then((response) => {
+                this.removeDeletedClient(client.id);
+            }).catch((error) => {
+                console.log('Could not delete user'); // perhaps make this fancier
+            });
+        },
+
+        removeDeletedClient(id) {
+            this.clientList = this.clientList.filter((client) => client.id !== id);
+        },
     }
 }
 </script>
