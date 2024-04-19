@@ -8,22 +8,22 @@
                     <h2>Client Info</h2>
                     <table>
                         <tbody>
-                            <tr>
-                                <th class="text-gray-600 pr-3">Name</th>
-                                <td>{{ client.name }}</td>
-                            </tr>
-                            <tr>
-                                <th class="text-gray-600 pr-3">Email</th>
-                                <td>{{ client.email }}</td>
-                            </tr>
-                            <tr>
-                                <th class="text-gray-600 pr-3">Phone</th>
-                                <td>{{ client.phone }}</td>
-                            </tr>
-                            <tr>
-                                <th class="text-gray-600 pr-3">Address</th>
-                                <td>{{ client.address }}<br/>{{ client.postcode + ' ' + client.city }}</td>
-                            </tr>
+                        <tr>
+                            <th class="text-gray-600 pr-3">Name</th>
+                            <td>{{ client.name }}</td>
+                        </tr>
+                        <tr>
+                            <th class="text-gray-600 pr-3">Email</th>
+                            <td>{{ client.email }}</td>
+                        </tr>
+                        <tr>
+                            <th class="text-gray-600 pr-3">Phone</th>
+                            <td>{{ client.phone }}</td>
+                        </tr>
+                        <tr>
+                            <th class="text-gray-600 pr-3">Address</th>
+                            <td>{{ client.address }}<br/>{{ client.postcode + ' ' + client.city }}</td>
+                        </tr>
                         </tbody>
                     </table>
                 </div>
@@ -31,31 +31,51 @@
 
             <div class="w-2/3">
                 <div>
-                    <button class="btn" :class="{'btn-primary': currentTab == 'bookings', 'btn-default': currentTab != 'bookings'}" @click="switchTab('bookings')">Bookings</button>
-                    <button class="btn" :class="{'btn-primary': currentTab == 'journals', 'btn-default': currentTab != 'journals'}" @click="switchTab('journals')">Journals</button>
+                    <button class="btn"
+                            :class="{'btn-primary': currentTab == 'bookings', 'btn-default': currentTab != 'bookings'}"
+                            @click="switchTab('bookings')">Bookings
+                    </button>
+                    <button class="btn"
+                            :class="{'btn-primary': currentTab == 'journals', 'btn-default': currentTab != 'journals'}"
+                            @click="switchTab('journals')">Journals
+                    </button>
                 </div>
 
                 <!-- Bookings -->
                 <div class="bg-white rounded p-4" v-if="currentTab == 'bookings'">
                     <h3 class="mb-3">List of client bookings</h3>
 
+                    <select
+                        v-model="selectedBookingFilteringOption"
+                        class="mt-2 mb-4 p-2 bg-gray-50 border border-gray w-full"
+                        @change="filterBookings"
+                    >
+                        <option
+                            v-for="option in bookingFilteringOptions"
+                            :value="option.value"
+                        >
+                            {{ option.label }}
+                        </option>
+                    </select>
+
                     <template v-if="bookings && bookings.length > 0">
                         <table>
                             <thead>
-                                <tr>
-                                    <th>Time</th>
-                                    <th>Notes</th>
-                                    <th>Actions</th>
-                                </tr>
+                            <tr>
+                                <th>Time</th>
+                                <th>Notes</th>
+                                <th>Actions</th>
+                            </tr>
                             </thead>
                             <tbody>
-                                <tr v-for="booking in client.bookings" :key="booking.id">
-                                    <td>{{ formatBookingPeriod(booking.start, booking.end) }}</td>
-                                    <td>{{ booking.notes }}</td>
-                                    <td>
-                                        <button class="btn btn-danger btn-sm" @click="deleteBooking(booking)">Delete</button>
-                                    </td>
-                                </tr>
+                            <tr v-for="booking in bookings" :key="booking.id">
+                                <td>{{ formatBookingPeriod(booking.start, booking.end) }}</td>
+                                <td>{{ booking.notes }}</td>
+                                <td>
+                                    <button class="btn btn-danger btn-sm" @click="deleteBooking(booking)">Delete
+                                    </button>
+                                </td>
+                            </tr>
                             </tbody>
                         </table>
                     </template>
@@ -87,25 +107,28 @@ export default {
     props: ['client'],
 
     data() {
-        let bookings = this.client.bookings;
-
-        if (bookings) {
-            bookings = bookings.sort((a, b) => {
-                if (a.start < b.start) {
-                    return 1;
-                }
-
-                if (a.start > b.start) {
-                    return -1;
-                }
-
-                return 0;
-            });
-        }
+        let bookings = this.sortBookings(this.client.bookings);
+        const bookingFilteringOptions = [
+            {
+                value: 0,
+                label: 'All Bookings',
+            },
+            {
+                value: 1,
+                label: 'Future Bookings Only',
+            },
+            {
+                value: 2,
+                label: 'Past Bookings Only',
+            },
+        ];
+        const selectedBookingFilteringOption = 0;
 
         return {
             currentTab: 'bookings',
             bookings,
+            bookingFilteringOptions,
+            selectedBookingFilteringOption,
         }
     },
 
@@ -135,6 +158,57 @@ export default {
             }
 
             return result;
+        },
+
+        sortBookings(bookings) {
+            if (!bookings) {
+                return;
+            }
+
+            return bookings.sort((a, b) => {
+                if (a.start < b.start) {
+                    return 1;
+                }
+
+                if (a.start > b.start) {
+                    return -1;
+                }
+
+                return 0;
+            });
+        },
+
+        filterBookings() {
+            let filteredBookings;
+
+            switch (this.selectedBookingFilteringOption) {
+                case 0:
+                    this.bookings = this.sortBookings(this.client.bookings);
+
+                    break;
+                case 1:
+                    filteredBookings = this.client.bookings.filter((booking) => {
+                        const currentDateTime = DateTime.now();
+                        const bookingDateTime = DateTime.fromISO(booking.start);
+
+                        return currentDateTime.ts < bookingDateTime.ts;
+                    });
+                    this.bookings = this.sortBookings(filteredBookings);
+
+                    break;
+                case 2:
+                    filteredBookings = this.client.bookings.filter((booking) => {
+                        const currentDateTime = DateTime.now();
+                        const bookingDateTime = DateTime.fromISO(booking.start);
+
+                        return currentDateTime.ts > bookingDateTime.ts;
+                    });
+                    this.bookings = this.sortBookings(filteredBookings);
+
+                    break;
+                default:
+                    throw new Error('Invalid booking option');
+            }
         },
     }
 }

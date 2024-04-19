@@ -2068,31 +2068,49 @@ __webpack_require__.r(__webpack_exports__);
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
 
 
 /* harmony default export */ __webpack_exports__["default"] = ({
   name: 'ClientShow',
   props: ['client'],
   data: function data() {
-    var bookings = this.client.bookings;
-
-    if (bookings) {
-      bookings = bookings.sort(function (a, b) {
-        if (a.start < b.start) {
-          return 1;
-        }
-
-        if (a.start > b.start) {
-          return -1;
-        }
-
-        return 0;
-      });
-    }
-
+    var bookings = this.sortBookings(this.client.bookings);
+    var bookingFilteringOptions = [{
+      value: 0,
+      label: 'All Bookings'
+    }, {
+      value: 1,
+      label: 'Future Bookings Only'
+    }, {
+      value: 2,
+      label: 'Past Bookings Only'
+    }];
+    var selectedBookingFilteringOption = 0;
     return {
       currentTab: 'bookings',
-      bookings: bookings
+      bookings: bookings,
+      bookingFilteringOptions: bookingFilteringOptions,
+      selectedBookingFilteringOption: selectedBookingFilteringOption
     };
   },
   methods: {
@@ -2118,6 +2136,53 @@ __webpack_require__.r(__webpack_exports__);
       }
 
       return result;
+    },
+    sortBookings: function sortBookings(bookings) {
+      if (!bookings) {
+        return;
+      }
+
+      return bookings.sort(function (a, b) {
+        if (a.start < b.start) {
+          return 1;
+        }
+
+        if (a.start > b.start) {
+          return -1;
+        }
+
+        return 0;
+      });
+    },
+    filterBookings: function filterBookings() {
+      var filteredBookings;
+
+      switch (this.selectedBookingFilteringOption) {
+        case 0:
+          this.bookings = this.sortBookings(this.client.bookings);
+          break;
+
+        case 1:
+          filteredBookings = this.client.bookings.filter(function (booking) {
+            var currentDateTime = luxon__WEBPACK_IMPORTED_MODULE_1__["DateTime"].now();
+            var bookingDateTime = luxon__WEBPACK_IMPORTED_MODULE_1__["DateTime"].fromISO(booking.start);
+            return currentDateTime.ts < bookingDateTime.ts;
+          });
+          this.bookings = this.sortBookings(filteredBookings);
+          break;
+
+        case 2:
+          filteredBookings = this.client.bookings.filter(function (booking) {
+            var currentDateTime = luxon__WEBPACK_IMPORTED_MODULE_1__["DateTime"].now();
+            var bookingDateTime = luxon__WEBPACK_IMPORTED_MODULE_1__["DateTime"].fromISO(booking.start);
+            return currentDateTime.ts > bookingDateTime.ts;
+          });
+          this.bookings = this.sortBookings(filteredBookings);
+          break;
+
+        default:
+          throw new Error('Invalid booking option');
+      }
     }
   }
 });
@@ -46480,7 +46545,7 @@ var render = function() {
                 }
               }
             },
-            [_vm._v("Bookings")]
+            [_vm._v("Bookings\n                ")]
           ),
           _vm._v(" "),
           _c(
@@ -46497,7 +46562,7 @@ var render = function() {
                 }
               }
             },
-            [_vm._v("Journals")]
+            [_vm._v("Journals\n                ")]
           )
         ]),
         _vm._v(" "),
@@ -46510,6 +46575,51 @@ var render = function() {
                   _vm._v("List of client bookings")
                 ]),
                 _vm._v(" "),
+                _c(
+                  "select",
+                  {
+                    directives: [
+                      {
+                        name: "model",
+                        rawName: "v-model",
+                        value: _vm.selectedBookingFilteringOption,
+                        expression: "selectedBookingFilteringOption"
+                      }
+                    ],
+                    staticClass:
+                      "mt-2 mb-4 p-2 bg-gray-50 border border-gray w-full",
+                    on: {
+                      change: [
+                        function($event) {
+                          var $$selectedVal = Array.prototype.filter
+                            .call($event.target.options, function(o) {
+                              return o.selected
+                            })
+                            .map(function(o) {
+                              var val = "_value" in o ? o._value : o.value
+                              return val
+                            })
+                          _vm.selectedBookingFilteringOption = $event.target
+                            .multiple
+                            ? $$selectedVal
+                            : $$selectedVal[0]
+                        },
+                        _vm.filterBookings
+                      ]
+                    }
+                  },
+                  _vm._l(_vm.bookingFilteringOptions, function(option) {
+                    return _c("option", { domProps: { value: option.value } }, [
+                      _vm._v(
+                        "\n                        " +
+                          _vm._s(option.label) +
+                          "\n                    "
+                      )
+                    ])
+                  }),
+                  0
+                ),
+                _vm._v(" "),
                 _vm.bookings && _vm.bookings.length > 0
                   ? [
                       _c("table", [
@@ -46517,7 +46627,7 @@ var render = function() {
                         _vm._v(" "),
                         _c(
                           "tbody",
-                          _vm._l(_vm.client.bookings, function(booking) {
+                          _vm._l(_vm.bookings, function(booking) {
                             return _c("tr", { key: booking.id }, [
                               _c("td", [
                                 _vm._v(
@@ -46543,7 +46653,11 @@ var render = function() {
                                       }
                                     }
                                   },
-                                  [_vm._v("Delete")]
+                                  [
+                                    _vm._v(
+                                      "Delete\n                                "
+                                    )
+                                  ]
                                 )
                               ])
                             ])
