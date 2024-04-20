@@ -117,6 +117,16 @@
                 </div>
             </div>
         </div>
+
+        <div
+            v-if="showError"
+            class="error-container"
+        >
+            <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
+                <strong class="font-bold">Error</strong>
+                <span class="block sm:inline">{{ errorText }}</span>
+            </div>
+        </div>
     </div>
 </template>
 
@@ -153,6 +163,8 @@ export default {
             journals: this.sortJournals(this.client.journals),
             bookingFilteringOptions,
             selectedBookingFilteringOption,
+            showError: false,
+            errorText: '',
         }
     },
 
@@ -166,7 +178,13 @@ export default {
             axios.delete(`/clients/${this.client.id}/bookings/${booking.id}`).then((response) =>{
                 this.removeDeletedBooking(booking.id);
             }).catch((error) => {
-                console.log('Could not delete booking');
+                this.errorText = 'Could not delete booking';
+                this.showError = true;
+
+                setTimeout(() => {
+                    this.showError = false;
+                    this.errorText = '';
+                }, 5000);
             });
         },
 
@@ -174,7 +192,13 @@ export default {
             axios.delete(`/clients/${this.client.id}/journals/${journal.id}`).then((response) => {
                 this.removeDeletedJournal(journal.id);
             }).catch((error) => {
-                console.log('Could not delete journal');
+                this.errorText = 'Could not delete journal';
+                this.showError = true;
+
+                setTimeout(() => {
+                    this.showError = false;
+                    this.errorText = '';
+                }, 5000);
             });
         },
 
@@ -282,3 +306,12 @@ export default {
     }
 }
 </script>
+
+<style>
+.error-container {
+    position: fixed;
+    top: 32px;
+    right: 32px;
+    width: 250px;
+}
+</style>

@@ -28,6 +28,16 @@
                 </tr>
             </tbody>
         </table>
+
+        <div
+            v-if="showError"
+            class="error-container"
+        >
+            <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
+                <strong class="font-bold">Error</strong>
+                <span class="block sm:inline">{{ errorText }}</span>
+            </div>
+        </div>
     </div>
 </template>
 
@@ -42,6 +52,8 @@ export default {
     data() {
         return {
             clientList: this.clients,
+            showError: false,
+            errorText: '',
         }
     },
 
@@ -50,7 +62,13 @@ export default {
             axios.delete(`/clients/${client.id}`).then((response) => {
                 this.removeDeletedClient(client.id);
             }).catch((error) => {
-                console.log('Could not delete client');
+                this.errorText = 'Could not delete client';
+                this.showError = true;
+
+                setTimeout(() => {
+                    this.showError = false;
+                    this.errorText = '';
+                }, 5000);
             });
         },
 
@@ -60,3 +78,12 @@ export default {
     }
 }
 </script>
+
+<style>
+.error-container {
+    position: fixed;
+    top: 32px;
+    right: 32px;
+    width: 240px;
+}
+</style>
