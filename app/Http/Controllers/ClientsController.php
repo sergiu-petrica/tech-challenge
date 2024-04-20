@@ -4,11 +4,13 @@ namespace App\Http\Controllers;
 
 use App\Client;
 use App\Http\Requests\ClientStoreRequest;
-use Illuminate\Http\Request;
+use App\Http\Resources\ClientResource;
+use Illuminate\View\View;
+use Symfony\Component\HttpFoundation\Response;
 
 class ClientsController extends Controller
 {
-    public function index()
+    public function index(): View // refactoring note: added return types everywhere
     {
         $clients = Client::where('user_id', auth()->id())->get();
 
@@ -16,40 +18,47 @@ class ClientsController extends Controller
             $client->append('bookings_count');
         }
 
-        return view('clients.index', ['clients' => $clients]);
+        // refactoring note: added resource classes for response data, this way we're forced to whitelist
+        // relevant properties without worrying about accidentally throwing properties we don't want in the frontend.
+        // the model's $hidden property achieves something similar, but resource classes are an extra layer of assurance
+        return view('clients.index', ['clients' => ClientResource::collection($clients)]);
     }
 
-    public function create()
+    public function create(): View
     {
         return view('clients.create');
     }
 
-    public function show($client)
+    public function show(int $clientId): View
     {
-        $client = Client::with('bookings')->where('id', $client)->first();
+        $client = Client::with(['bookings', 'journals'])->find($clientId);
+        $this->authorize('view', $client);
 
-        return view('clients.show', ['client' => $client]);
+        return view('clients.show', ['client' => ClientResource::make($client)]);
     }
 
-    public function store(ClientStoreRequest $request)
+    public function store(ClientStoreRequest $request): Response
     {
-        $client = new Client;
-        $client->name = $request->get('name');
-        $client->email = $request->get('email');
-        $client->phone = $request->get('phone');
-        $client->address = $request->get('address');
-        $client->city = $request->get('city');
-        $client->postcode = $request->get('postcode');
-        $client->user_id = auth()->id();
+        $client = new Client([
+            'name' => $request->get('name'),
+            'email' => $request->get('email'),
+            'phone' => $request->get('phone'),
+            'address' => $request->get('address'),
+            'city' => $request->get('city'),
+            'postcode' => $request->get('postcode'),
+            'user_id' => auth()->id(),
+        ]);
         $client->save();
 
-        return $client;
+        return response(ClientResource::make($client), Response::HTTP_CREATED); // refactor notes: added responses everywhere, this way we can control the status code
     }
 
-    public function destroy($client)
+    public function destroy(int $clientId): Response
     {
-        Client::where('id', $client)->delete();
+        $client = Client::with('user')->find($clientId);
+        $this->authorize('destroy', $client);
+        $client->delete();
 
-        return 'Deleted';
+        return response(null, Response::HTTP_NO_CONTENT);
     }
 }

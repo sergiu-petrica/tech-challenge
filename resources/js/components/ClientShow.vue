@@ -90,7 +90,30 @@
                 <div class="bg-white rounded p-4" v-if="currentTab == 'journals'">
                     <h3 class="mb-3">List of client journals</h3>
 
-                    <p>(BONUS) TODO: implement this feature</p>
+                    <a class="btn btn-primary mb-3" :href="`/clients/${client.id}/journals/create`">Create</a>
+
+                    <template v-if="journals && journals.length > 0">
+                        <table>
+                            <thead>
+                            <tr>
+                                <th>Notes</th>
+                                <th>Date</th>
+                                <th>Actions</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr v-for="journal in journals" :key="journal.id">
+                                <td>{{ journal.content }}</td>
+                                <td>{{ formatJournalDate(journal.date) }}</td>
+                                <td>
+                                    <a class="btn btn-primary btn-sm" :href="`/clients/${client.id}/journals/${journal.id}`">View</a>
+                                    <button class="btn btn-danger btn-sm" @click="deleteJournal(journal)">Delete
+                                    </button>
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </template>
                 </div>
             </div>
         </div>
@@ -99,7 +122,8 @@
 
 <script>
 import axios from 'axios';
-import {DateTime} from "luxon";
+import { DateTime } from "luxon";
+import { formatJournalDate } from "../helpers/DateTimeFormatHelper";
 
 export default {
     name: 'ClientShow',
@@ -107,7 +131,6 @@ export default {
     props: ['client'],
 
     data() {
-        let bookings = this.sortBookings(this.client.bookings);
         const bookingFilteringOptions = [
             {
                 value: 0,
@@ -126,19 +149,33 @@ export default {
 
         return {
             currentTab: 'bookings',
-            bookings,
+            bookings: this.sortBookings(this.client.bookings),
+            journals: this.sortJournals(this.client.journals),
             bookingFilteringOptions,
             selectedBookingFilteringOption,
         }
     },
 
     methods: {
+        formatJournalDate,
         switchTab(newTab) {
             this.currentTab = newTab;
         },
 
         deleteBooking(booking) {
-            axios.delete(`/bookings/${booking.id}`);
+            axios.delete(`/clients/${this.client.id}/bookings/${booking.id}`).then((response) =>{
+                this.removeDeletedBooking(booking.id);
+            }).catch((error) => {
+                console.log('Could not delete booking');
+            });
+        },
+
+        deleteJournal(journal) {
+            axios.delete(`/clients/${this.client.id}/journals/${journal.id}`).then((response) => {
+                this.removeDeletedJournal(journal.id);
+            }).catch((error) => {
+                console.log('Could not delete journal');
+            });
         },
 
         formatBookingPeriod(startTime, endTime) {
@@ -178,6 +215,24 @@ export default {
             });
         },
 
+        sortJournals(journals) {
+            if (!journals) {
+                return;
+            }
+
+            return journals.sort((a, b) => {
+                if (a.date < b.date) {
+                    return 1;
+                }
+
+                if (a.date > b.date) {
+                    return -1
+                }
+
+                return 0;
+            });
+        },
+
         filterBookings() {
             let filteredBookings;
 
@@ -209,6 +264,20 @@ export default {
                 default:
                     throw new Error('Invalid booking option');
             }
+        },
+
+        refreshJournals() {
+            this.journals = this.client.journals;
+        },
+
+        removeDeletedBooking(id) {
+            this.client.bookings = this.client.bookings.filter((booking) => booking.id !== id);
+            this.filterBookings();
+        },
+
+        removeDeletedJournal(id) {
+            this.client.journals = this.client.journals.filter((journal) => journal.id !== id);
+            this.refreshJournals();
         },
     }
 }

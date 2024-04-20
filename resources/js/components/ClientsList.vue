@@ -50,7 +50,7 @@ export default {
             axios.delete(`/clients/${client.id}`).then((response) => {
                 this.removeDeletedClient(client.id);
             }).catch((error) => {
-                console.log('Could not delete user'); // perhaps make this fancier
+                console.log('Could not delete client');
             });
         },
 
