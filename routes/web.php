@@ -29,7 +29,7 @@ Route::group(['middleware' => 'auth', 'prefix' => 'clients'], function () {
     Route::delete('/{client_id}', 'ClientsController@destroy');
 
     Route::get('/{client_id}/journals/create', 'JournalsController@create');
-    Route::get('/{client}/journals/{journal}', 'JournalsController@show');
+    Route::get('/{client_id}/journals/{journal_id}', 'JournalsController@show');
     Route::post('/{client_id}/journals', 'JournalsController@store');
     Route::delete('/{client_id}/journals/{journal_id}', 'JournalsController@destroy');
 
